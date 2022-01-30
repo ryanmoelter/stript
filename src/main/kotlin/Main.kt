@@ -46,6 +46,7 @@ suspend fun fadeInByProgress(spiDevice: SpiDevice) {
   }
 }
 
+@Suppress("unused")
 fun clear(spiDevice: SpiDevice) {
   spiDevice.writeLights(
     buildList {
