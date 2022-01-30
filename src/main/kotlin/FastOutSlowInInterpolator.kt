@@ -37,10 +37,21 @@ class FastOutSlowInInterpolator {
 
   fun getScaledProgressValue(linearProgress: Float): Float {
     val progressIndex = (VALUES.size * linearProgress).toInt()
-    if (progressIndex >= VALUES.size) return 1f
-    val microLinearProgress = (linearProgress - (progressIndex.toFloat() / VALUES.size)) * VALUES.size
+    return when {
+      progressIndex >= VALUES.lastIndex -> 1f
+      progressIndex < 0 -> 0f
+      else -> {
+        val microLinearProgress =
+          (linearProgress - (progressIndex.toFloat() / VALUES.size)) * VALUES.size
 
-    return linearInterpolate(VALUES[progressIndex], VALUES[progressIndex + 1], microLinearProgress)
+        linearInterpolate(
+          VALUES[progressIndex],
+          VALUES[progressIndex + 1],
+          microLinearProgress
+        )
+      }
+    }
+
   }
 
   private fun linearInterpolate(start: Float, end: Float, linearProgress: Float): Float =
