@@ -46,6 +46,16 @@ suspend fun fadeInByProgress(spiDevice: SpiDevice) {
   }
 }
 
+fun clear(spiDevice: SpiDevice) {
+  spiDevice.writeLights(
+    buildList {
+      repeat(NUM_LIGHTS) {
+        add(LedColor(0, 0, 0))
+      }
+    }
+  )
+}
+
 data class LedColor(val red: UByte, val green: UByte, val blue: UByte) {
   constructor(red: Int, green: Int, blue: Int) : this(
     red.toUByte(),
