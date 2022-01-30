@@ -44,7 +44,7 @@ class FastOutSlowInInterpolator {
         val microLinearProgress =
           (linearProgress - (progressIndex.toFloat() / VALUES.size)) * VALUES.size
 
-        linearInterpolate(
+        linearlyInterpolate(
           VALUES[progressIndex],
           VALUES[progressIndex + 1],
           microLinearProgress
@@ -53,7 +53,7 @@ class FastOutSlowInInterpolator {
     }
 
   }
-
-  private fun linearInterpolate(start: Float, end: Float, linearProgress: Float): Float =
-    start + (linearProgress * (end - start))
 }
+
+fun linearlyInterpolate(start: Float, end: Float, linearProgress: Float): Float =
+  start + (linearProgress * (end - start))

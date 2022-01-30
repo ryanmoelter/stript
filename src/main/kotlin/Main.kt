@@ -20,8 +20,6 @@ fun main() {
 }
 
 suspend fun fadeInByProgress(spiDevice: SpiDevice) {
-  val interpolator = FastOutSlowInInterpolator()
-
   val duration = 4.toDuration(DurationUnit.SECONDS)
   val lastFrame = (FRAMES_PER_SECOND * duration.inWholeMilliseconds / 1000).toInt()
 
@@ -29,21 +27,28 @@ suspend fun fadeInByProgress(spiDevice: SpiDevice) {
     val colors = buildList {
       (0 until NUM_LIGHTS).forEach { lightIndex ->
         val linearProgress = frameNum.toFloat() / lastFrame
-        val interpolatedProgress = interpolator.getScaledProgressValue(linearProgress)
-        val lightRelativeCoordinateStart = lightIndex.toFloat() / NUM_LIGHTS
-        val lightRelativeCoordinateSize = 1f / NUM_LIGHTS
 
-        val progressModifier =
-          ((interpolatedProgress - lightRelativeCoordinateStart) / lightRelativeCoordinateSize)
-            .coerceIn(0f, 1f)
+        val rightToLeftModifier = calculateRightToLeftProgressModifier(linearProgress, lightIndex)
+        val fadeModifier = linearProgress
 
-        val brightness = (0x5F * linearProgress * progressModifier).roundToInt()
+        val brightness = (0x5F * fadeModifier * rightToLeftModifier).roundToInt()
         add(LedColor(red = brightness, green = brightness * 7 / 10, blue = brightness * 5 / 10))
       }
     }
     spiDevice.writeLights(colors)
     delay(FRAME_DELAY_MILLIS)
   }
+}
+
+fun calculateRightToLeftProgressModifier(linearProgress: Float, lightIndex: Int): Float {
+  val interpolator = FastOutSlowInInterpolator()
+
+  val interpolatedProgress = interpolator.getScaledProgressValue(linearProgress)
+  val lightRelativeCoordinateStart = lightIndex.toFloat() / NUM_LIGHTS
+  val lightRelativeCoordinateSize = 1f / NUM_LIGHTS
+
+  return ((interpolatedProgress - lightRelativeCoordinateStart) / lightRelativeCoordinateSize)
+    .coerceIn(0f, 1f)
 }
 
 @Suppress("unused")
