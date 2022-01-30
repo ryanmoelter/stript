@@ -34,6 +34,8 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
 
+    implementation("com.diozero:diozero-core:1.3.1")
+
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
     testImplementation("io.strikt:strikt-core:0.33.0")
     testImplementation("io.mockk:mockk:1.12.2")
