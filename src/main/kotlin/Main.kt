@@ -31,8 +31,8 @@ suspend fun fadeInByProgress(spiDevice: SpiDevice) {
         val rightToLeftModifier = calculateRightToLeftProgressModifier(linearProgress, lightIndex)
         val fadeModifier = linearProgress
 
-        val brightness = (0x5F * fadeModifier * rightToLeftModifier).roundToInt()
-        add(LedColor(red = brightness, green = brightness * 7 / 10, blue = brightness * 5 / 10))
+        val brightness = (0xFF * fadeModifier * rightToLeftModifier).roundToInt()
+        add(LedColor(red = brightness, green = brightness, blue = brightness))
       }
     }
     spiDevice.writeLights(colors)
@@ -45,9 +45,8 @@ fun calculateRightToLeftProgressModifier(linearProgress: Float, lightIndex: Int)
 
   val interpolatedProgress = interpolator.getScaledProgressValue(linearProgress)
   val lightRelativeCoordinateStart = lightIndex.toFloat() / NUM_LIGHTS
-  val lightRelativeCoordinateSize = 1f / NUM_LIGHTS
 
-  return ((interpolatedProgress - lightRelativeCoordinateStart) / lightRelativeCoordinateSize)
+  return ((interpolatedProgress - lightRelativeCoordinateStart) * NUM_LIGHTS)
     .coerceIn(0f, 1f)
 }
 
@@ -83,4 +82,6 @@ fun SpiDevice.writeLights(colors: List<LedColor>) {
 
 fun SpiDevice.writeColor(color: LedColor) {
   write(UByte.MAX_VALUE.toByte(), color.blue.toByte(), color.green.toByte(), color.red.toByte())
+  // 0xFF
+  // 0b 1111 1111
 }
