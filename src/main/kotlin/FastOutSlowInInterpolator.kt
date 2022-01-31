@@ -1,3 +1,5 @@
+import kotlin.math.roundToInt
+
 class FastOutSlowInInterpolator {
 
   private val VALUES = floatArrayOf(
@@ -57,3 +59,6 @@ class FastOutSlowInInterpolator {
 
 fun linearlyInterpolate(start: Float, end: Float, linearProgress: Float): Float =
   start + (linearProgress * (end - start))
+
+fun linearlyInterpolate(start: Int, end: Int, linearProgress: Float): Int =
+  linearlyInterpolate(start.toFloat(), end.toFloat(), linearProgress).roundToInt()

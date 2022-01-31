@@ -29,12 +29,18 @@ application {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.31")
-    testImplementation(group = "junit", name = "junit", version = "4.12")
-
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.10")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
 
+    // Pins and wiring
     implementation("com.diozero:diozero-core:1.3.1")
+
+    // Server
+    val ktorVersion = "2.0.0-beta-1"
+    implementation("io.ktor:ktor-server-core:$ktorVersion")
+    implementation("io.ktor:ktor-server-cio:$ktorVersion")
+    implementation("io.ktor:ktor-network:$ktorVersion")
+    implementation("ch.qos.logback:logback-classic:1.2.10")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
     testImplementation("io.strikt:strikt-core:0.33.0")
