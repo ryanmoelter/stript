@@ -2,7 +2,7 @@ import com.diozero.api.SpiDevice
 import kotlinx.coroutines.delay
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
-import kotlin.time.DurationUnit
+import kotlin.time.DurationUnit.MILLISECONDS
 import kotlin.time.toDuration
 
 @Suppress("unused")
@@ -26,7 +26,10 @@ suspend fun fadeInFromMiddleOut(
   val colorDistance = startColors.mapIndexed { index, ledColor ->
     ledColor.calculateColorDistanceTo(endColors[index])
   }.average().toFloat()
-  val duration = (2000 * colorDistance).roundToInt().toDuration(DurationUnit.MILLISECONDS)
+  val signedColorDistance = startColors.mapIndexed { index, ledColor ->
+    ledColor.calculateSignedColorDistanceTo(endColors[index])
+  }.average().toFloat()
+  val duration = (2000 * colorDistance.absoluteValue).roundToInt().toDuration(MILLISECONDS)
   val lastFrame = maxOf(
     (FRAMES_PER_SECOND * duration.inWholeMilliseconds / 1000).toInt(),
     10
@@ -37,13 +40,16 @@ suspend fun fadeInFromMiddleOut(
       (0 until NUM_LIGHTS).forEach { lightIndex ->
         val linearProgress = frameNum.toFloat() / lastFrame
 
-        val middleOutProgressModifier =
+        val progressModifier = if (signedColorDistance >= 0) {
           calculateMiddleOutProgressModifier(linearProgress, lightIndex)
+        } else {
+          calculateOutsideInProgressModifier(linearProgress, lightIndex)
+        }
 
         add(
           startColors[lightIndex].linearlyInterpolateTo(
             end = endColors[lightIndex],
-            progress = middleOutProgressModifier
+            progress = progressModifier
           )
         )
       }
@@ -51,6 +57,7 @@ suspend fun fadeInFromMiddleOut(
     spiDevice.writeLights(colors)
     delay(FRAME_DELAY_MILLIS)
   }
+  spiDevice.writeLights(endColors)
 }
 
 private fun calculateMiddleOutProgressModifier(linearProgress: Float, lightIndex: Int): Float {
@@ -60,7 +67,20 @@ private fun calculateMiddleOutProgressModifier(linearProgress: Float, lightIndex
   val halfLightCoordinateSize = 1f / NUM_LIGHTS / 2
   val physicalLightMiddleCoordinate = lightIndex.toFloat() / NUM_LIGHTS + halfLightCoordinateSize
   val mappedLightStartCoordinate =
-    ((physicalLightMiddleCoordinate - .5f) * 2f).absoluteValue - (halfLightCoordinateSize / 2)
+    ((physicalLightMiddleCoordinate - .5f) * 2f).absoluteValue - (halfLightCoordinateSize * 2)
+
+  return ((interpolatedProgress - mappedLightStartCoordinate) * NUM_LIGHTS)
+    .coerceIn(0f, 1f)
+}
+
+private fun calculateOutsideInProgressModifier(linearProgress: Float, lightIndex: Int): Float {
+  val interpolator = FastOutSlowInInterpolator()
+
+  val interpolatedProgress = interpolator.getScaledProgressValue(linearProgress)
+  val halfLightCoordinateSize = 1f / NUM_LIGHTS / 2
+  val physicalLightMiddleCoordinate = lightIndex.toFloat() / NUM_LIGHTS + halfLightCoordinateSize
+  val mappedLightStartCoordinate =
+    1 - ((physicalLightMiddleCoordinate - .5f) * 2f).absoluteValue - (halfLightCoordinateSize * 2)
 
   return ((interpolatedProgress - mappedLightStartCoordinate) * NUM_LIGHTS)
     .coerceIn(0f, 1f)
@@ -77,6 +97,19 @@ private fun LedColor.calculateColorDistanceTo(other: LedColor): Float {
 private fun UByte.calculateColorDistanceTo(other: UByte): Float {
   val distance = (this.toInt() - other.toInt()).absoluteValue.toFloat() / UByte.MAX_VALUE.toFloat()
   return distance * distance
+}
+
+private fun LedColor.calculateSignedColorDistanceTo(other: LedColor): Float {
+  return listOf(
+    red.calculateSignedColorDistanceTo(other.red),
+    green.calculateSignedColorDistanceTo(other.green),
+    blue.calculateSignedColorDistanceTo(other.blue)
+  ).average().toFloat()
+}
+
+private fun UByte.calculateSignedColorDistanceTo(other: UByte): Float {
+  val distance = (other.toInt() - this.toInt()).toFloat() / UByte.MAX_VALUE.toFloat()
+  return distance
 }
 
 @Suppress("unused")
